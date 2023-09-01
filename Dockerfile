@@ -2,7 +2,7 @@
 # do not define PLATFORM32 or set it to null if you're building for newer platforms, i.e. Pi 3, Pi 3+, Pi 4, Pi 400, Pi Zero 2 W, Pi CM3, Pi CM3+, Pi CM4
 FROM ubuntu:20.04
 
-ENV LINUX_KERNEL_VERSION=5.15
+ENV LINUX_KERNEL_VERSION=6.1
 ENV LINUX_KERNEL_BRANCH=rpi-${LINUX_KERNEL_VERSION}.y
 
 ENV TZ=Europe/Copenhagen
@@ -14,8 +14,12 @@ RUN apt-get install -y crossbuild-essential-arm64 crossbuild-essential-armhf
 RUN apt-get install -y wget zip unzip fdisk nano curl xz-utils
 
 WORKDIR /rpi-kernel
-RUN git clone https://github.com/raspberrypi/linux.git -b ${LINUX_KERNEL_BRANCH} --depth=1
+RUN mkdir linux
 WORKDIR /rpi-kernel/linux
+RUN git init
+RUN git remote add origin https://github.com/raspberrypi/linux.git
+RUN git fetch --depth 1 origin e89e7655a197d28df49da2be7e2003436cf52197
+RUN git checkout e89e7655a197d28df49da2be7e2003436cf52197 
 RUN export PATCH=$(curl -s https://mirrors.edge.kernel.org/pub/linux/kernel/projects/rt/${LINUX_KERNEL_VERSION}/ | sed -n 's:.*<a href="\(.*\).patch.gz">.*:\1:p' | sort -V | tail -1) && \
     echo "Downloading patch ${PATCH}" && \
     curl https://mirrors.edge.kernel.org/pub/linux/kernel/projects/rt/${LINUX_KERNEL_VERSION}/${PATCH}.patch.gz --output ${PATCH}.patch.gz && \
